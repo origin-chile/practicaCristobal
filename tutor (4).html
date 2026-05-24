@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TutorIA — Enseñanza Media Chile</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f2ee;--surface:#fff;--surface2:#ede9e2;--border:#ddd8cf;
+  --ink:#1a1714;--ink2:#4a4540;--ink3:#8a8580;
+  --purple:#6d28d9;--purple-bg:#f5f3ff;--purple-light:#ede9fe;
+  --green:#15803d;--green-bg:#f0fdf4;
+  --amber:#b45309;--amber-bg:#fffbeb;
+  --red:#b91c1c;--red-bg:#fef2f2;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+}
+body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+
+/* Layout */
+.app{max-width:1060px;margin:0 auto;padding:20px 14px 80px;display:grid;grid-template-columns:290px 1fr;gap:16px;align-items:start}
+@media(max-width:740px){.app{grid-template-columns:1fr}}
+
+/* Sidebar */
+.sidebar{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:sticky;top:14px;max-height:calc(100vh - 28px);display:flex;flex-direction:column}
+.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--purple)}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--purple)}
+.logo-sub{font-size:10px;color:var(--ink3);margin-top:2px;font-weight:400}
+
+/* Year tabs */
+.year-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ytab{padding:5px 2px;border-radius:6px;border:1.5px solid var(--border);background:transparent;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;text-align:center;color:var(--ink2)}
+.ytab:hover{background:var(--surface2)}
+.ytab.active{border-color:var(--purple);background:var(--purple-bg);color:var(--purple)}
+.year-label{padding:6px 12px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3)}
+
+/* Subject list */
+.subject-list{padding:6px;overflow-y:auto;flex:1}
+.subject-list::-webkit-scrollbar{width:3px}
+.subject-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.subj{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;transition:.15s;border:1.5px solid transparent;margin-bottom:2px}
+.subj:hover{background:var(--surface2)}
+.subj.active{background:var(--purple-bg);border-color:rgba(109,40,217,.2)}
+.subj-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.subj-name{font-size:12px;font-weight:600;line-height:1.3}
+.subj-sub{font-size:10px;color:var(--ink3)}
+.subj.active .subj-name{color:var(--purple)}
+
+/* Limit bar */
+.limit-bar{padding:8px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.sf{padding:7px 12px;background:var(--surface2);font-size:10px;color:var(--ink3);line-height:1.5;flex-shrink:0}
+
+/* Upload */
+.apuntes-panel{border-top:1px solid var(--border);padding:8px 10px;flex-shrink:0}
+.ap-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.ap-status{font-size:9px;padding:2px 7px;border-radius:100px;font-weight:600;text-transform:none;letter-spacing:0}
+.ap-status.loaded{background:var(--green-bg);color:var(--green)}
+.ap-status.empty{background:var(--surface2);color:var(--ink3)}
+.upload-area{border:1.5px dashed var(--border);border-radius:7px;padding:10px;text-align:center;cursor:pointer;transition:.15s;background:var(--surface2)}
+.upload-area:hover{border-color:rgba(109,40,217,.4);background:var(--purple-bg)}
+.upload-text{font-size:10px;color:var(--ink3);line-height:1.4}
+.ap-loaded{background:var(--green-bg);border:1px solid rgba(21,128,61,.2);border-radius:7px;padding:7px;font-size:10px}
+.ap-filename{font-weight:600;color:var(--green)}
+.ap-remove{background:none;border:none;color:var(--red);font-size:10px;cursor:pointer;margin-top:3px;padding:0;font-family:'Space Grotesk',sans-serif}
+
+/* Main */
+.main{display:flex;flex-direction:column;gap:12px}
+
+/* Header */
+.mh{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.mh-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mh-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.mh-title{font-size:17px;font-weight:700}
+.mh-year{display:inline-flex;padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-left:8px;background:var(--purple-bg);color:var(--purple)}
+.mh-sub{font-size:11px;color:var(--ink3)}
+.topics{display:flex;flex-wrap:wrap;gap:4px}
+.tbtn{padding:3px 10px;border-radius:100px;border:1px solid var(--border);background:transparent;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:500;color:var(--ink2);cursor:pointer;transition:.15s}
+.tbtn:hover{background:var(--purple-bg);border-color:rgba(109,40,217,.3);color:var(--purple)}
+
+/* Modes */
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:500px){.modes{grid-template-columns:repeat(2,1fr)}}
+.mbtn{padding:10px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;transition:.15s;text-align:center;font-family:'Space Grotesk',sans-serif}
+.mbtn:hover,.mbtn.active{border-color:var(--purple);background:var(--purple-bg)}
+.mbtn.mode-certamen:hover,.mbtn.mode-certamen.active{border-color:var(--amber);background:var(--amber-bg)}
+.mbtn span:first-child{font-size:16px;display:block;margin-bottom:2px}
+.mbtn .ml{font-size:11px;font-weight:600;display:block;color:var(--ink)}
+.mbtn .ms{font-size:10px;color:var(--ink3);display:block;margin-top:1px}
+
+/* Chat */
+.chat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;min-height:180px}
+.empty{text-align:center;padding:28px 12px;color:var(--ink3)}
+.empty-e{font-size:32px;margin-bottom:8px}
+.empty-t{font-size:14px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.qs{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;justify-content:center}
+.qbtn{padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--surface);font-size:11px;color:var(--ink2);cursor:pointer;transition:.15s;font-family:'Space Grotesk',sans-serif}
+.qbtn:hover{background:var(--purple-bg);border-color:rgba(109,40,217,.3);color:var(--purple)}
+.msg{margin-bottom:14px;animation:fi .3s ease}
+.msg-u{display:flex;justify-content:flex-end}
+.bu{background:var(--purple);color:#fff;border-radius:14px 14px 4px 14px;padding:8px 13px;max-width:75%;font-size:14px;line-height:1.6}
+.msg-a{display:flex;gap:8px}
+.av{width:28px;height:28px;border-radius:8px;background:var(--purple-bg);border:1px solid rgba(109,40,217,.2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.ac{flex:1}
+.an{font-size:10px;font-weight:600;color:var(--purple);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.ab{background:var(--surface2);border:1px solid var(--border);border-radius:4px 12px 12px 12px;padding:13px 15px;font-size:14px;line-height:1.85}
+.ab h1,.ab h2,.ab h3{font-family:'Space Grotesk',sans-serif;font-weight:700;margin:14px 0 6px;color:var(--ink)}
+.ab h1{font-size:16px}.ab h2{font-size:15px}.ab h3{font-size:14px}
+.ab p{margin-bottom:10px}
+.ab ul,.ab ol{padding-left:20px;margin-bottom:10px}
+.ab li{margin-bottom:4px}
+.ab strong{font-weight:600;color:var(--ink)}
+.ab em{font-style:italic}
+.ab code{background:var(--border);padding:2px 6px;border-radius:4px;font-family:'Courier New',monospace;font-size:13px}
+.ab pre{background:var(--ink);color:#f0f0f0;padding:12px;border-radius:8px;overflow-x:auto;margin-bottom:10px;font-size:13px}
+.ab table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px}
+.ab th{background:var(--purple-light);padding:7px 10px;text-align:left;font-weight:600;color:var(--purple)}
+.ab td{padding:6px 10px;border-bottom:1px solid var(--border)}
+.ab hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+/* KaTeX overrides para fracciones */
+.ab .katex{font-size:1.05em;color:var(--ink)}
+.ab .katex-display{overflow-x:auto;margin:12px 0;padding:8px;background:var(--purple-light);border-radius:8px;border-left:3px solid var(--purple)}
+.ab .katex-display .katex{font-size:1.15em}
+.typing{display:flex;gap:4px;align-items:center;padding:10px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:4px 12px 12px 12px;width:fit-content}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--ink3);animation:bo .8s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+.err{background:var(--red-bg);border:1px solid rgba(185,28,28,.2);border-radius:6px;padding:9px 12px;font-size:13px;color:var(--red)}
+
+/* Input */
+.ia{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.ial{font-size:10px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.ir{display:flex;gap:8px;align-items:flex-end}
+textarea{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--ink);resize:none;outline:none;transition:.2s;line-height:1.6;min-height:62px}
+textarea:focus{border-color:var(--purple);background:#fff}
+textarea::placeholder{color:var(--ink3)}
+.sb{width:38px;height:38px;background:var(--purple);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.sb:hover{background:#5b21b6}
+.sb:disabled{opacity:.4;cursor:not-allowed}
+.sb svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Certamen */
+.certamen-setup{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.cert-title{font-size:17px;font-weight:700;margin-bottom:5px}
+.cert-sub{font-size:13px;color:var(--ink3);margin-bottom:18px}
+.cert-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.cert-group label{font-size:11px;font-weight:600;color:var(--ink2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.cert-btns{display:flex;gap:5px;flex-wrap:wrap}
+.cert-opt{padding:5px 13px;border-radius:7px;border:1.5px solid var(--border);background:transparent;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:.15s}
+.cert-opt.selected{border-color:var(--amber);background:var(--amber-bg);color:var(--amber)}
+.btn-start-cert{width:100%;padding:13px;border-radius:10px;background:var(--amber);border:none;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:.2s}
+.btn-start-cert:hover{background:#92400e}
+.cert-active{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.cert-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cert-progress{font-size:12px;font-weight:600;color:var(--ink2)}
+.cert-timer{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:5px 13px;border-radius:7px}
+.cert-timer.urgent{color:var(--red);background:var(--red-bg)}
+.cert-q-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:7px}
+.cert-q-text{font-size:15px;font-weight:600;line-height:1.6;margin-bottom:14px;padding:13px;background:var(--surface2);border-radius:9px;border-left:3px solid var(--amber)}
+.cert-answer{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--ink);resize:none;outline:none;min-height:80px;transition:.2s;line-height:1.6}
+.cert-answer:focus{border-color:var(--amber)}
+.cert-nav{display:flex;gap:8px;margin-top:10px}
+.btn-cert-next,.btn-cert-finish{flex:1;padding:10px;border-radius:8px;border:none;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer}
+.btn-cert-next{background:var(--purple)}
+.btn-cert-finish{background:var(--amber)}
+.cert-dots{display:flex;gap:4px;flex-wrap:wrap}
+.cert-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.3s}
+.cert-dot.answered{background:var(--purple)}
+.cert-dot.current{background:var(--amber);transform:scale(1.3)}
+.cert-result{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+.nota-display{text-align:center;margin-bottom:22px;padding:20px;background:var(--surface2);border-radius:12px}
+.nota-num{font-family:'Space Grotesk',sans-serif;font-size:68px;font-weight:800;line-height:1}
+.nota-label{font-size:14px;color:var(--ink3);margin-top:4px}
+.nota-verde{color:var(--green)}.nota-amarilla{color:var(--amber)}.nota-roja{color:var(--red)}
+.result-q{margin-bottom:12px;padding:11px;border-radius:9px;border:1px solid var(--border)}
+.result-q.correct{background:var(--green-bg);border-color:rgba(21,128,61,.2)}
+.result-q.wrong{background:var(--red-bg);border-color:rgba(185,28,28,.15)}
+.result-q-header{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.result-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px}
+.badge-ok{background:rgba(21,128,61,.15);color:var(--green)}
+.badge-err{background:rgba(185,28,28,.1);color:var(--red)}
+.result-q-text{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.result-feedback{font-size:13px;color:var(--ink2);line-height:1.6}
+.btn-retry{width:100%;padding:11px;border-radius:8px;background:var(--purple);border:none;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;margin-top:14px}
+
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bo{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><div class="logo-dot"></div>TutorIA</div>
+      <div class="logo-sub">Enseñanza Media · Chile · Plan MINEDUC</div>
+    </div>
+    <div class="year-tabs" id="yearTabs">
+      <button class="ytab active" data-year="1" onclick="setYear(this)">1° Medio</button>
+      <button class="ytab" data-year="2" onclick="setYear(this)">2° Medio</button>
+      <button class="ytab" data-year="3" onclick="setYear(this)">3° Medio</button>
+      <button class="ytab" data-year="4" onclick="setYear(this)">4° Medio</button>
+    </div>
+    <div class="subject-list" id="subjectList"></div>
+    <div class="apuntes-panel">
+      <div class="ap-label">📁 Mis apuntes <span class="ap-status empty" id="apStatus">Sin cargar</span></div>
+      <div id="apuntesUpload">
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+          <div style="font-size:18px;margin-bottom:3px">📄</div>
+          <div class="upload-text"><strong>Sube tus apuntes</strong><br>PDF o TXT · La IA responderá desde tu material</div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.txt,.md" style="display:none" onchange="uploadFile(this)">
+      </div>
+      <div id="apuntesLoaded" style="display:none">
+        <div class="ap-loaded">
+          <div class="ap-filename" id="apFilename">—</div>
+          <div style="color:var(--ink3);font-size:10px" id="apChars">—</div>
+          <button class="ap-remove" onclick="removeApuntes()">✕ Quitar apuntes</button>
+        </div>
+      </div>
+    </div>
+    <div class="limit-bar" id="limitBar"></div>
+    <div class="sf">Temarios según Plan de Estudios MINEDUC · Bases Curriculares 2015–2020</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="mh">
+      <div class="mh-top">
+        <div class="mh-icon" id="mhIcon">📐</div>
+        <div style="flex:1">
+          <div class="mh-title" id="mhTitle">Matemática <span class="mh-year" id="mhYear">1° Medio</span></div>
+          <div class="mh-sub" id="mhSub">Álgebra · Geometría · Números</div>
+        </div>
+      </div>
+      <div class="topics" id="topicsRow"></div>
+    </div>
+    <div class="modes">
+      <button class="mbtn active" data-mode="explicar" onclick="setMode(this)"><span>💡</span><span class="ml">Explicar</span><span class="ms">Entender</span></button>
+      <button class="mbtn" data-mode="ejercicio" onclick="setMode(this)"><span>✏️</span><span class="ml">Ejercicio</span><span class="ms">Practicar</span></button>
+      <button class="mbtn" data-mode="prueba" onclick="setMode(this)"><span>📝</span><span class="ml">Mini prueba</span><span class="ms">Evaluar</span></button>
+      <button class="mbtn mode-certamen" data-mode="certamen" onclick="setMode(this)"><span>🎯</span><span class="ml">Certamen</span><span class="ms">Simulacro</span></button>
+    </div>
+    <div id="chatArea">
+      <div class="chat">
+        <div class="empty" id="emptyState">
+          <div class="empty-e">👋</div>
+          <div class="empty-t">¿Qué no entiendes hoy?</div>
+          <div style="font-size:13px;color:var(--ink3)">Elige un tema arriba o escribe tu duda directamente.</div>
+          <div class="qs" id="quickQ"></div>
+        </div>
+        <div id="messages"></div>
+      </div>
+      <div class="ia">
+        <div class="ial" id="inputLabel">¿Qué quieres que explique?</div>
+        <div class="ir">
+          <textarea id="userInput" placeholder="Ej: No entiendo las fracciones..." rows="2" onkeydown="handleKey(event)"></textarea>
+          <button class="sb" id="sendBtn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="certamenSetup" style="display:none">
+      <div class="certamen-setup">
+        <div class="cert-title">🎯 Simulacro de Prueba</div>
+        <div class="cert-sub">La IA genera preguntas del nivel de tu prueba real. Recibes nota del 1.0 al 7.0.</div>
+        <div class="cert-options">
+          <div class="cert-group"><label>Preguntas</label><div class="cert-btns">
+            <button class="cert-opt selected" data-q="5" onclick="selectOpt(this,'q')">5</button>
+            <button class="cert-opt" data-q="8" onclick="selectOpt(this,'q')">8</button>
+            <button class="cert-opt" data-q="10" onclick="selectOpt(this,'q')">10</button>
+          </div></div>
+          <div class="cert-group"><label>Tiempo</label><div class="cert-btns">
+            <button class="cert-opt selected" data-t="20" onclick="selectOpt(this,'t')">20 min</button>
+            <button class="cert-opt" data-t="30" onclick="selectOpt(this,'t')">30 min</button>
+            <button class="cert-opt" data-t="45" onclick="selectOpt(this,'t')">45 min</button>
+          </div></div>
+        </div>
+        <button class="btn-start-cert" onclick="startCertamen()">⚡ Comenzar prueba</button>
+      </div>
+    </div>
+    <div id="certamenActive" style="display:none">
+      <div class="cert-active">
+        <div class="cert-header">
+          <div class="cert-progress" id="certProgress">Pregunta 1 de 5</div>
+          <div class="cert-timer" id="certTimer">20:00</div>
+        </div>
+        <div class="cert-dots" id="certDots"></div><br>
+        <div class="cert-q-num" id="certQNum">Pregunta 1</div>
+        <div class="cert-q-text" id="certQText">Cargando...</div>
+        <textarea class="cert-answer" id="certAnswer" placeholder="Escribe tu respuesta aquí..." rows="3"></textarea>
+        <div class="cert-nav">
+          <button class="btn-cert-next" id="certNextBtn" onclick="nextQuestion()">Siguiente →</button>
+          <button class="btn-cert-finish" id="certFinishBtn" style="display:none" onclick="finishCertamen()">Terminar y ver nota</button>
+        </div>
+      </div>
+    </div>
+    <div id="certamenResult" style="display:none">
+      <div class="cert-result">
+        <div class="nota-display">
+          <div class="nota-num" id="notaNum">—</div>
+          <div class="nota-label" id="notaLabel">—</div>
+        </div>
+        <div id="resultDetails"></div>
+        <button class="btn-retry" onclick="retryCertamen()">↩ Nueva prueba</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = window.location.origin + "/api/chat";
+const UPLOAD_URL = window.location.origin + "/api/upload";
+const DAILY_LIMIT = 30;
+marked.setOptions({breaks:true,gfm:true});
+
+// ─── UID ─────────────────────────────────────────────────
+function getUID(){
+  let u=localStorage.getItem('tutoria_uid');
+  if(!u){u='u_'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('tutoria_uid',u);}
+  return u;
+}
+
+// ─── LÍMITE ──────────────────────────────────────────────
+function getTodayKey(){return 'msgs_'+new Date().toISOString().split('T')[0];}
+function getMsgsToday(){return parseInt(localStorage.getItem(getTodayKey())||'0');}
+function updateLimitBar(){
+  const used=getMsgsToday(),remaining=Math.max(0,DAILY_LIMIT-used);
+  const pct=Math.min(100,(used/DAILY_LIMIT)*100);
+  const color=remaining>10?'var(--green)':remaining>3?'var(--amber)':'var(--red)';
+  document.getElementById('limitBar').innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+      <span style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em">Mensajes hoy</span>
+      <span style="font-size:10px;font-weight:700;color:${color}">${remaining} restantes</span>
+    </div>
+    <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;transition:width .4s"></div>
+    </div>`;
+}
+function showLimitModal(){
+  const m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:30px;max-width:320px;width:100%;text-align:center">
+    <div style="font-size:38px;margin-bottom:12px">⚡</div>
+    <h3 style="font-size:17px;font-weight:700;margin-bottom:8px;color:var(--ink)">Límite diario alcanzado</h3>
+    <p style="font-size:13px;color:var(--ink3);line-height:1.6;margin-bottom:18px">Usaste los 30 mensajes de hoy.<br>Se reinician a medianoche 🌙</p>
+    <button onclick="this.closest('div[style]').remove()" style="background:var(--purple);border:none;color:#fff;border-radius:9px;padding:11px 22px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Space Grotesk',sans-serif">Entendido</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+// ─── MARKDOWN + KATEX ────────────────────────────────────
+function renderMD(text){
+  // Proteger signos de peso chilenos
+  let processed = text.replace(/\$(\d)/g, '&#36;$1');
+  // Convertir \( \) a formato que marked no rompa
+  processed = processed.replace(/\\\(/g, '~~MATHOPEN~~').replace(/\\\)/g, '~~MATHCLOSE~~');
+  processed = processed.replace(/\\\[/g, '~~DISPLAYOPEN~~').replace(/\\\]/g, '~~DISPLAYCLOSE~~');
+  const html = marked.parse(processed);
+  // Restaurar delimitadores matemáticos
+  let restored = html
+    .replace(/~~MATHOPEN~~/g, '\\(')
+    .replace(/~~MATHCLOSE~~/g, '\\)')
+    .replace(/~~DISPLAYOPEN~~/g, '\\[')
+    .replace(/~~DISPLAYCLOSE~~/g, '\\]');
+  const div = document.createElement('div');
+  div.innerHTML = restored;
+  renderMathInElement(div, {
+    delimiters:[
+      {left:'$$', right:'$$', display:true},
+      {left:'\\(', right:'\\)', display:false},
+      {left:'\\[', right:'\\]', display:true}
+    ],
+    throwOnError: false,
+    ignoredTags: ['script','noscript','style','textarea','pre','code']
+  });
+  return div.innerHTML;
+}
+
+// ─── CURRICULUM MINEDUC ──────────────────────────────────
+// Basado en Bases Curriculares MINEDUC 2015-2020
+const curriculum = {
+  1:[
+    {id:'mat1',name:'Matemática',sub:'Números · Álgebra · Geometría',icon:'📐',bg:'#eff6ff',
+     topics:['Números enteros y racionales','Fracciones y decimales','Potencias y raíces','Expresiones algebraicas','Ecuaciones de 1° grado','Perímetros y áreas','Estadística básica','Proporcionalidad'],
+     quick:['¿Cómo sumo fracciones?','Explícame las ecuaciones de 1° grado','¿Qué es una potencia?','¿Cómo calculo el área de un triángulo?']},
+    {id:'len1',name:'Lenguaje',sub:'Comprensión · Literatura · Escritura',icon:'📖',bg:'#fdf4ff',
+     topics:['Comprensión lectora','Texto narrativo','Figuras literarias (metáfora, símil)','Tipos de narrador','Ortografía y puntuación','Conectores discursivos','Texto informativo','Argumentación básica'],
+     quick:['¿Qué es una metáfora?','Diferencia narrador protagonista y omnisciente','¿Cómo identifico la idea principal?','¿Qué son los conectores?']},
+    {id:'his1',name:'Historia',sub:'Historia universal · Geografía · Ciudadanía',icon:'🌍',bg:'#fff7ed',
+     topics:['Prehistoria y primeras civilizaciones','Mesopotamia y Egipto','Grecia antigua','Roma antigua','Geografía física de Chile','Representaciones cartográficas','Derechos y deberes ciudadanos'],
+     quick:['¿Qué fue Mesopotamia?','Diferencia Grecia y Roma','¿Cómo se lee un mapa?','¿Qué caracteriza la democracia ateniense?']},
+    {id:'cien1',name:'Ciencias Naturales',sub:'Biología · Física · Química',icon:'🔬',bg:'#f0fdf4',
+     topics:['La célula: estructura y función','Biodiversidad','Ecosistemas y cadenas tróficas','Materia y sus propiedades','Tabla periódica básica','Fuerzas y movimiento','Energía: tipos y transformaciones'],
+     quick:['¿Qué es la célula?','¿Cómo funciona una cadena trófica?','¿Qué es la materia?','Diferencia fuerza y movimiento']},
+    {id:'ing1',name:'Inglés',sub:'A2 · Gramática básica · Vocabulario',icon:'🇬🇧',bg:'#eff4ff',
+     topics:['Present simple y continuous','Past simple','Vocabulario: familia, casa, rutinas','Preguntas con Wh-','There is / There are','Can / Can\'t','Comprensión de textos simples'],
+     quick:['¿Cómo uso el present simple?','Diferencia "is" y "are"','¿Cómo pregunto en inglés?','¿Cuándo uso "can"?']},
+    {id:'edu1',name:'Ed. Ciudadana',sub:'Sociedad · Derechos · Democracia',icon:'⚖️',bg:'#f5f3ff',
+     topics:['Derechos humanos','Constitución chilena básica','Instituciones del Estado','Participación ciudadana','Diversidad cultural','Convivencia escolar'],
+     quick:['¿Qué son los derechos humanos?','¿Cómo funciona el Estado chileno?','¿Qué es la democracia?','¿Qué es la Constitución?']},
+  ],
+  2:[
+    {id:'mat2',name:'Matemática',sub:'Álgebra · Funciones · Geometría analítica',icon:'📐',bg:'#eff6ff',
+     topics:['Funciones y sus representaciones','Función lineal y afín','Sistemas de ecuaciones','Números reales','Potencias con exponente entero','Teorema de Pitágoras aplicado','Estadística: medidas de tendencia central','Probabilidad básica'],
+     quick:['¿Qué es una función?','¿Cómo grafico una función lineal?','¿Cómo resuelvo un sistema de ecuaciones?','¿Qué es la media y la mediana?']},
+    {id:'len2',name:'Lenguaje',sub:'Literatura · Argumentación · Medios',icon:'📖',bg:'#fdf4ff',
+     topics:['Texto argumentativo','Ensayo literario','Novela y cuento: análisis','Recursos retóricos','Medios de comunicación','Publicidad y su análisis','Discurso oral','Ortografía avanzada'],
+     quick:['¿Qué es un texto argumentativo?','¿Cómo analizo un cuento?','¿Qué son los recursos retóricos?','¿Cómo estructuro un ensayo?']},
+    {id:'his2',name:'Historia',sub:'Edad Media · Chile colonial · Modernidad',icon:'🌍',bg:'#fff7ed',
+     topics:['Edad Media en Europa','Feudalismo','Renacimiento y Humanismo','América precolombina','Conquista de América','Chile colonial','Iglesia y sociedad colonial','Ilustración'],
+     quick:['¿Qué fue el feudalismo?','¿Qué civilizaciones había en América antes de la Conquista?','¿Cómo fue la Conquista de Chile?','¿Qué es el Renacimiento?']},
+    {id:'bio2',name:'Biología',sub:'Genética · Evolución · Fisiología',icon:'🧬',bg:'#f0fdf4',
+     topics:['ADN y ARN','Herencia y genética mendeliana','Mutaciones','Teoría de la evolución','Selección natural','Sistema digestivo','Sistema circulatorio','Sistema nervioso'],
+     quick:['¿Qué es el ADN?','¿Cómo funciona la herencia genética?','¿Qué es la evolución?','¿Cómo funciona el sistema digestivo?']},
+    {id:'fis2',name:'Física',sub:'Energía · Calor · Ondas',icon:'⚡',bg:'#fffbeb',
+     topics:['Energía cinética y potencial','Conservación de la energía','Calor y temperatura','Dilatación térmica','Ondas: características','Sonido','Luz y óptica básica'],
+     quick:['Diferencia energía cinética y potencial','¿Qué es la conservación de energía?','¿Qué es una onda?','¿Cómo viaja el sonido?']},
+    {id:'qui2',name:'Química',sub:'Enlace · Reacciones · Soluciones',icon:'🧪',bg:'#fdf4ff',
+     topics:['Enlace iónico y covalente','Nomenclatura química básica','Reacciones químicas','Balanceo de ecuaciones','Ácidos y bases (pH)','Soluciones y concentración','Propiedades de los metales'],
+     quick:['¿Qué es un enlace covalente?','¿Cómo balanceo una ecuación?','¿Qué es el pH?','Diferencia ácido y base']},
+    {id:'ing2',name:'Inglés',sub:'B1 · Gramática intermedia · Reading',icon:'🇬🇧',bg:'#eff4ff',
+     topics:['Present perfect','Past continuous','Future: will y going to','Comparativos y superlativos','Voz pasiva básica','Reading: textos descriptivos','Writing: párrafo descriptivo'],
+     quick:['¿Cuándo uso present perfect?','Diferencia will y going to','¿Cómo formo la voz pasiva?','¿Qué es un comparativo?']},
+  ],
+  3:[
+    {id:'mat3',name:'Matemática',sub:'Funciones · Trigonometría · Estadística',icon:'📐',bg:'#eff6ff',
+     topics:['Función cuadrática','Función exponencial y logarítmica','Trigonometría: seno, coseno, tangente','Triángulo rectángulo','Estadística: varianza y desviación estándar','Probabilidad condicional','Números complejos básicos'],
+     quick:['¿Cómo grafico una parábola?','¿Qué es el seno y coseno?','¿Cómo calculo la desviación estándar?','¿Qué es la probabilidad condicional?']},
+    {id:'len3',name:'Lenguaje',sub:'Literatura chilena · Ensayo · PAES',icon:'📖',bg:'#fdf4ff',
+     topics:['Literatura chilena del siglo XX','Poesía: Neruda, Mistral, Huidobro','Novela latinoamericana','Ensayo argumentativo','Análisis de texto PAES','Intertextualidad','Comprensión inferencial'],
+     quick:['¿Quién es Pablo Neruda?','¿Cómo analizo un poema?','¿Qué es la intertextualidad?','Estrategias para PAES Lectora']},
+    {id:'his3',name:'Historia',sub:'Chile siglo XIX-XX · DDHH · Globalización',icon:'🌍',bg:'#fff7ed',
+     topics:['Independencia de Chile','República parlamentaria','Siglo XX en Chile','Golpe de Estado 1973','Dictadura militar','Retorno a la democracia','Derechos Humanos en Chile','Globalización'],
+     quick:['¿Cómo fue la Independencia de Chile?','¿Qué pasó el 11 de septiembre de 1973?','¿Qué es la dictadura militar?','¿Qué son los DDHH en Chile?']},
+    {id:'bio3',name:'Biología',sub:'Ecología · Fisiología · Biotecnología',icon:'🧬',bg:'#f0fdf4',
+     topics:['Ecología y ecosistemas','Flujo de energía','Ciclos biogeoquímicos','Sistema endocrino','Sistema reproductor','Inmunología básica','Biotecnología y genética aplicada'],
+     quick:['¿Qué es el ciclo del carbono?','¿Cómo funciona el sistema endocrino?','¿Qué es la inmunidad?','¿Qué es la biotecnología?']},
+    {id:'fis3',name:'Física',sub:'Electricidad · Magnetismo · Electromagnetismo',icon:'⚡',bg:'#fffbeb',
+     topics:['Carga eléctrica y campo eléctrico','Potencial eléctrico','Corriente eléctrica','Ley de Ohm','Circuitos eléctricos','Magnetismo','Inducción electromagnética'],
+     quick:['¿Qué es la corriente eléctrica?','¿Cómo aplico la Ley de Ohm?','¿Qué es un circuito en serie?','Diferencia circuito serie y paralelo']},
+    {id:'qui3',name:'Química',sub:'Estequiometría · Gases · Equilibrio',icon:'🧪',bg:'#fdf4ff',
+     topics:['Estequiometría y mol','Leyes de los gases','Termodinámica química básica','Equilibrio químico','Constante de equilibrio','Electroquímica básica','Química orgánica: hidrocarburos'],
+     quick:['¿Qué es el mol?','¿Cómo resuelvo problemas de estequiometría?','¿Qué es el equilibrio químico?','¿Qué es un hidrocarburo?']},
+    {id:'ing3',name:'Inglés',sub:'B1+ · Gramática avanzada · Expresión oral',icon:'🇬🇧',bg:'#eff4ff',
+     topics:['Condicionales (0,1,2,3)','Modal verbs avanzados','Reported speech','Phrasal verbs comunes','Reading: textos argumentativos','Writing: opinion essay','Vocabulario académico'],
+     quick:['¿Qué son los condicionales?','¿Cómo uso reported speech?','¿Qué son los phrasal verbs?','¿Cómo escribo un opinion essay?']},
+  ],
+  4:[
+    {id:'mat4',name:'Matemática',sub:'Modelamiento · Probabilidad · PAES M',icon:'📐',bg:'#eff6ff',
+     topics:['Modelamiento matemático','Derivadas e introducción al cálculo','Sucesiones y series','Probabilidad y distribuciones','Estadística inferencial básica','PAES Matemática M1 y M2','Resolución de problemas complejos'],
+     quick:['¿Qué es una derivada?','¿Cómo resuelvo problemas PAES Matemática?','¿Qué es una distribución normal?','¿Cómo interpreto datos estadísticos?']},
+    {id:'len4',name:'Lenguaje',sub:'PAES Lectora · Ensayo · Literatura universal',icon:'📖',bg:'#fdf4ff',
+     topics:['Estrategias PAES Comprensión Lectora','Tipos de preguntas PAES','Literatura universal siglo XX','Texto de opinión y crítica','Ensayo académico','Comunicación oral avanzada','Análisis de géneros discursivos'],
+     quick:['Estrategias para PAES Lectora','¿Cómo identifico la tesis de un texto?','¿Qué preguntas vienen en la PAES?','¿Cómo escribo un ensayo académico?']},
+    {id:'his4',name:'Historia',sub:'Chile contemporáneo · Ciudadanía · PAES',icon:'🌍',bg:'#fff7ed',
+     topics:['Chile en el siglo XXI','Transición democrática','Movimientos sociales en Chile','Economía chilena y globalización','Sistema político chileno actual','Ciudadanía y participación','PAES Historia: estrategias','América Latina contemporánea'],
+     quick:['¿Cómo funciona el sistema político de Chile hoy?','¿Qué son los movimientos sociales?','Estrategias PAES Historia','¿Qué es la transición democrática?']},
+    {id:'bio4',name:'Biología',sub:'Genoma · Evolución · Neurociencia',icon:'🧬',bg:'#f0fdf4',
+     topics:['Genoma humano','Biotecnología: CRISPR y aplicaciones','Evolución molecular','Sistema nervioso avanzado','Neurociencia básica','Inmunología avanzada','Ecología global y cambio climático','PAES Ciencias: biología'],
+     quick:['¿Qué es el genoma humano?','¿Qué es CRISPR?','¿Cómo funciona el cerebro?','¿Qué es el cambio climático?']},
+    {id:'fis4',name:'Física',sub:'Física moderna · Electromagnetismo · PAES',icon:'⚡',bg:'#fffbeb',
+     topics:['Electromagnetismo: Ondas EM','Física moderna: relatividad básica','Física cuántica básica','Energía nuclear','Astrofísica básica','PAES Ciencias: física','Aplicaciones tecnológicas'],
+     quick:['¿Qué es la teoría de la relatividad?','¿Qué es la física cuántica?','¿Qué es la energía nuclear?','Estrategias PAES Física']},
+    {id:'qui4',name:'Química',sub:'Orgánica · Termodinámica · PAES',icon:'🧪',bg:'#fdf4ff',
+     topics:['Química orgánica: funciones orgánicas','Polímeros y plásticos','Termodinámica química','Electroquímica','Bioquímica básica','Química ambiental','PAES Ciencias: química'],
+     quick:['¿Qué son las funciones orgánicas?','¿Qué es un polímero?','¿Cómo funciona una pila eléctrica?','Estrategias PAES Química']},
+    {id:'ing4',name:'Inglés',sub:'B2 · Textos complejos · Academic writing',icon:'🇬🇧',bg:'#eff4ff',
+     topics:['Reading: textos académicos y técnicos','Argumentative essay avanzado','Vocabulary in context','Grammar review completo','Listening strategies','PAES Inglés: estrategias','Presentaciones orales'],
+     quick:['Estrategias para PAES Inglés','¿Cómo escribo un argumentative essay?','¿Cómo entiendo textos difíciles?','Grammar review: errores comunes']},
+  ]
+};
+
+let currentYear=1, current=curriculum[1][0], mode='explicar', history=[];
+let apuntesText='';
+
+// ─── APUNTES ─────────────────────────────────────────────
+async function uploadFile(input){
+  const file=input.files[0]; if(!file) return;
+  const st=document.getElementById('apStatus');
+  st.textContent='Cargando...';st.className='ap-status empty';
+  const form=new FormData();form.append('file',file);
+  try{
+    const res=await fetch(UPLOAD_URL,{method:'POST',body:form});
+    if(!res.ok) throw new Error(await res.text());
+    const d=await res.json();
+    apuntesText=d.text;
+    document.getElementById('apFilename').textContent='📄 '+d.filename;
+    document.getElementById('apChars').textContent=d.chars+' caracteres extraídos';
+    document.getElementById('apuntesUpload').style.display='none';
+    document.getElementById('apuntesLoaded').style.display='block';
+    st.textContent='Cargado';st.className='ap-status loaded';
+  }catch(e){st.textContent='Error';alert('Error: '+e.message);}
+  input.value='';
+}
+function removeApuntes(){
+  apuntesText='';
+  document.getElementById('apuntesUpload').style.display='block';
+  document.getElementById('apuntesLoaded').style.display='none';
+  document.getElementById('apStatus').textContent='Sin cargar';
+  document.getElementById('apStatus').className='ap-status empty';
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────
+function setYear(btn){
+  currentYear=parseInt(btn.dataset.year);
+  document.querySelectorAll('.ytab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  current=curriculum[currentYear][0];
+  history=[];
+  resetToChat();
+  buildSidebar();buildHeader();
+}
+function buildSidebar(){
+  document.getElementById('subjectList').innerHTML=curriculum[currentYear].map(s=>`
+    <div class="subj${s.id===current.id?' active':''}" onclick="selectSubject('${s.id}')">
+      <div class="subj-icon" style="background:${s.bg}">${s.icon}</div>
+      <div><div class="subj-name">${s.name}</div><div class="subj-sub">${s.sub}</div></div>
+    </div>`).join('');
+}
+function buildHeader(){
+  document.getElementById('mhIcon').textContent=current.icon;
+  document.getElementById('mhIcon').style.background=current.bg;
+  document.getElementById('mhTitle').innerHTML=`${current.name} <span class="mh-year">${currentYear}° Medio</span>`;
+  document.getElementById('mhSub').textContent=current.sub;
+  document.getElementById('topicsRow').innerHTML=current.topics.map(t=>`<button class="tbtn" onclick="askTopic('${t}')">${t}</button>`).join('');
+  document.getElementById('quickQ').innerHTML=current.quick.map(q=>`<button class="qbtn" onclick="askQuick('${q}')">${q}</button>`).join('');
+  updateLimitBar();
+}
+function selectSubject(id){
+  current=curriculum[currentYear].find(s=>s.id===id);
+  history=[];resetToChat();buildSidebar();buildHeader();
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('messages').innerHTML='';
+  addWelcome();
+}
+function addWelcome(){
+  const txt=`¡Hola! Soy tu tutor de **${current.name}** de **${currentYear}° Medio**${apuntesText?' — tengo tus apuntes cargados 📄':''}. ¿Qué tema quieres repasar hoy? 🚀`;
+  document.getElementById('messages').innerHTML=`<div class="msg msg-a"><div class="av"></div><div class="ac"><div class="an">TutorIA · ${current.name}</div><div class="ab">${renderMD(txt)}</div></div></div>`;
+}
+function resetToChat(){
+  document.getElementById('chatArea').style.display='block';
+  ['certamenSetup','certamenActive','certamenResult'].forEach(id=>document.getElementById(id).style.display='none');
+}
+function setMode(btn){
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');mode=btn.dataset.mode;
+  if(mode==='certamen'){
+    document.getElementById('chatArea').style.display='none';
+    document.getElementById('certamenSetup').style.display='block';
+    ['certamenActive','certamenResult'].forEach(id=>document.getElementById(id).style.display='none');
+  } else {
+    resetToChat();
+    const labels={explicar:'¿Qué quieres que explique?',ejercicio:'¿Sobre qué tema practicar?',prueba:'¿Qué tema quieres evaluar?'};
+    document.getElementById('inputLabel').textContent=labels[mode];
+  }
+}
+function askTopic(t){
+  if(mode==='certamen') return;
+  const p={explicar:`Explícame: ${t}`,ejercicio:`Dame un ejercicio de: ${t}`,prueba:`Hazme una mini prueba de: ${t}`};
+  document.getElementById('userInput').value=p[mode];sendMessage();
+}
+function askQuick(q){document.getElementById('userInput').value=q;sendMessage();}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+
+// ─── SYSTEM PROMPT ───────────────────────────────────────
+function buildSystem(mode){
+  const apCtx=apuntesText?`\n\nMATERIAL DEL ESTUDIANTE (úsalo como base cuando sea relevante):\n${apuntesText}`:'';
+  const base=`Eres TutorIA, el mejor tutor de Chile para estudiantes de ${currentYear}° Medio.
+
+REGLAS IMPORTANTES DE FORMATO:
+- Habla de forma cercana, amigable y clara — como un profe joven que realmente quiere que entiendan
+- Usa emojis con moderación para hacer el texto más visual 💡✨
+- Relaciona los conceptos con ejemplos de la vida real chilena
+- Evita garabatos, modismos exagerados y muletillas como "po", "cachai", "al tiro"
+- Usa negritas **así** para lo más importante
+- Para matemáticas SIEMPRE usa: \\\\( fórmula \\\\) para inline y $$ fórmula $$ para bloque. NUNCA uses $ solo ni escribas LaTeX como texto
+- Fracciones: escribe directamente \\\\( \\\\frac{3}{8} \\\\) — NUNCA expliques la sintaxis, úsala
+- Otros ejemplos: \\\\( x + 5 = 10 \\\\), \\\\( 3^2 = 9 \\\\), $$ \\\\frac{a}{b} = c $$
+- REGLA DE ORO: si es una fórmula, escríbela con LaTeX. Si es texto, sin LaTeX
+- Máximo 3-4 líneas por párrafo
+- Termina siempre con una pregunta o desafío
+
+Materia: ${current.name} · ${currentYear}° Medio · Plan MINEDUC Chile
+Temas del curso: ${current.topics.join(', ')}`;
+
+  const modos={
+    explicar:`\n\nMODO EXPLICAR 💡: Explica como niveles de videojuego 🎮
+Nivel 1 — ¿Qué es esto en simple? (analogía con algo que conocen)
+Nivel 2 — La explicación real con ejemplos concretos y números
+Nivel 3 — ¿Cómo se aplica? (ejercicio o situación real)
+Si hay fórmulas, SIEMPRE con \\( \\) o $$ y explica qué significa cada letra.`,
+    ejercicio:`\n\nMODO EJERCICIO ✏️: Crea UN ejercicio concreto con contexto chileno divertido (precios en el almacén, partidos de fútbol, redes sociales, etc).
+Estructura:
+**Ejercicio:** [enunciado con números reales]
+**Estrategia:** [qué hay que hacer y por qué]
+**Solución paso a paso:**
+Paso 1: ...
+Paso 2: ...
+**Respuesta:** [resultado final]
+**Truco secreto:** [tip para recordar el método]
+TODAS las operaciones matemáticas con \\( \\) o $$.`,
+    prueba:`\n\nMODO MINI PRUEBA 📝: Crea EXACTAMENTE 3 preguntas numeradas sobre el tema pedido. Las preguntas deben ser variadas (una conceptual, una de cálculo, una de aplicación). SOLO muestra las preguntas, NO las respuestas todavía.
+Cuando el estudiante responda, evalúa con ✅ o ❌ para cada una, explica el error con buena onda y anima a seguir.`
+  };
+  return base+(modos[mode]||'')+apCtx;
+}
+
+// ─── CHAT ────────────────────────────────────────────────
+async function sendMessage(){
+  const input=document.getElementById('userInput');
+  const text=input.value.trim();
+  if(!text) return;
+  document.getElementById('emptyState').style.display='none';
+  input.value='';
+  const msgs=document.getElementById('messages');
+  msgs.innerHTML+=`<div class="msg msg-u"><div class="bu">${text}</div></div>`;
+  const tid='t'+Date.now();
+  msgs.innerHTML+=`<div class="msg msg-a" id="${tid}"><div class="av"></div><div class="ac"><div class="an">TutorIA · ${current.name}</div><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('sendBtn').disabled=true;
+  history.push({role:'user',content:text});
+  try{
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:history,system:buildSystem(mode),max_tokens:1800,uid:getUID(),plan:'free'})});
+    if(res.status===429){
+      document.getElementById(tid).remove();
+      localStorage.setItem(getTodayKey(),String(DAILY_LIMIT));
+      updateLimitBar();showLimitModal();
+      document.getElementById('sendBtn').disabled=false;return;
+    }
+    if(!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`);
+    const d=await res.json();
+    const reply=d.content?.find(b=>b.type==='text')?.text||'Sin respuesta.';
+    history.push({role:'assistant',content:reply});
+    localStorage.setItem(getTodayKey(),String(getMsgsToday()+1));
+    updateLimitBar();
+    document.getElementById(tid).remove();
+    const el=document.createElement('div');
+    el.className='msg msg-a';
+    el.innerHTML=`<div class="av"></div><div class="ac"><div class="an">TutorIA · ${current.name}</div><div class="ab">${renderMD(reply)}</div></div>`;
+    msgs.appendChild(el);
+  }catch(e){
+    document.getElementById(tid).remove();
+    msgs.innerHTML+=`<div class="msg msg-a"><div class="av">❌</div><div class="ac"><div class="ab"><div class="err">${e.message}</div></div></div></div>`;
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+  document.getElementById('sendBtn').disabled=false;
+  input.focus();
+}
+
+// ─── CERTAMEN ────────────────────────────────────────────
+let certState={questions:[],answers:[],current:0,timeLeft:0,timer:null};
+function selectOpt(btn,type){btn.closest('.cert-btns').querySelectorAll('.cert-opt').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');}
+async function startCertamen(){
+  const numQ=parseInt(document.querySelector('[data-q].selected')?.dataset.q||5);
+  const mins=parseInt(document.querySelector('[data-t].selected')?.dataset.t||20);
+  certState={questions:[],answers:[],current:0,timeLeft:mins*60,timer:null};
+  document.getElementById('certamenSetup').style.display='none';
+  document.getElementById('certamenActive').style.display='block';
+  document.getElementById('certQText').textContent='Generando preguntas...';
+  document.getElementById('certNextBtn').disabled=true;
+  const apCtx=apuntesText?`\nMaterial del estudiante:\n${apuntesText.substring(0,3000)}`:'';
+  const prompt=`Genera exactamente ${numQ} preguntas de prueba de ${currentYear}° Medio sobre ${current.name}. Temas: ${current.topics.join(', ')}. Nivel enseñanza media chilena, preguntas claras y concretas.${apCtx}\n\nResponde SOLO con JSON (sin markdown, sin texto extra):\n[{"q":"pregunta 1"},{"q":"pregunta 2"},...]\n\nCada pregunta debe ser autónoma y resoluble.`;
+  try{
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],max_tokens:1000,uid:getUID(),plan:'free'})});
+    const d=await res.json();
+    certState.questions=JSON.parse(d.content?.find(b=>b.type==='text')?.text.replace(/```json|```/g,'').trim()||'[]').map(p=>p.q||p);
+  }catch(e){certState.questions=current.topics.slice(0,numQ).map(t=>`Explica y resuelve un problema de: ${t}`);}
+  document.getElementById('certDots').innerHTML=certState.questions.map((_,i)=>`<div class="cert-dot${i===0?' current':''}" id="dot${i}"></div>`).join('');
+  showQuestion(0);startTimer();document.getElementById('certNextBtn').disabled=false;
+}
+function showQuestion(idx){
+  const n=certState.questions.length;
+  document.getElementById('certQNum').textContent=`Pregunta ${idx+1}`;
+  document.getElementById('certQText').textContent=certState.questions[idx];
+  document.getElementById('certProgress').textContent=`Pregunta ${idx+1} de ${n}`;
+  document.getElementById('certAnswer').value=certState.answers[idx]||'';
+  document.getElementById('certAnswer').focus();
+  document.querySelectorAll('.cert-dot').forEach((d,i)=>{d.className='cert-dot'+(i===idx?' current':certState.answers[i]?' answered':'');});
+  const isLast=idx===n-1;
+  document.getElementById('certNextBtn').style.display=isLast?'none':'block';
+  document.getElementById('certFinishBtn').style.display=isLast?'block':'none';
+}
+function nextQuestion(){certState.answers[certState.current]=document.getElementById('certAnswer').value;if(certState.current<certState.questions.length-1){certState.current++;showQuestion(certState.current);}}
+function startTimer(){
+  clearInterval(certState.timer);
+  certState.timer=setInterval(()=>{
+    certState.timeLeft--;
+    const m=Math.floor(certState.timeLeft/60),s=certState.timeLeft%60;
+    const el=document.getElementById('certTimer');
+    el.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    el.className='cert-timer'+(certState.timeLeft<180?' urgent':'');
+    if(certState.timeLeft<=0){clearInterval(certState.timer);finishCertamen();}
+  },1000);
+}
+async function finishCertamen(){
+  clearInterval(certState.timer);
+  certState.answers[certState.current]=document.getElementById('certAnswer').value;
+  document.getElementById('certamenActive').style.display='none';
+  document.getElementById('certamenResult').style.display='block';
+  document.getElementById('notaNum').textContent='...';
+  document.getElementById('notaLabel').textContent='Evaluando respuestas...';
+  const qa=certState.questions.map((q,i)=>`P${i+1}: ${q}\nR${i+1}: ${certState.answers[i]||'Sin respuesta'}`).join('\n\n');
+  const prompt=`Evalúa esta prueba de ${current.name} de ${currentYear}° Medio. Responde SOLO con JSON (sin markdown):\n{"nota":6.5,"correctas":4,"total":5,"items":[{"q":"pregunta","correcto":true,"feedback":"explicación breve en tono amigable"}]}\n\nNota del 1.0 al 7.0 escala chilena (60% mínimo = nota 4.0).\n\n${qa}`;
+  try{
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],max_tokens:1500,uid:getUID(),plan:'free'})});
+    const d=await res.json();
+    const result=JSON.parse(d.content?.find(b=>b.type==='text')?.text.replace(/```json|```/g,'').trim()||'{}');
+    showCertamenResult(result);
+  }catch(e){document.getElementById('notaLabel').textContent='Error al evaluar. Intenta de nuevo.';}
+}
+function showCertamenResult(r){
+  const nota=(r.nota||4.0).toFixed(1);
+  const el=document.getElementById('notaNum');
+  el.textContent=nota;
+  el.className='nota-num '+(nota>=5?'nota-verde':nota>=4?'nota-amarilla':'nota-roja');
+  const lbls={verde:'¡Excelente! Muy bien logrado 🎉',amarilla:'Aprobado — sigue practicando 💪',roja:'Reprobado — practiquemos más juntos 📚'};
+  const cls=nota>=5?'verde':nota>=4?'amarilla':'roja';
+  document.getElementById('notaLabel').textContent=lbls[cls]+` · ${r.correctas||'?'}/${r.total||certState.questions.length} correctas`;
+  document.getElementById('resultDetails').innerHTML=(r.items||[]).map((item,i)=>`
+    <div class="result-q ${item.correcto?'correct':'wrong'}">
+      <div class="result-q-header"><span class="result-badge ${item.correcto?'badge-ok':'badge-err'}">${item.correcto?'✓ Correcto':'✗ Incorrecto'}</span><span style="font-size:11px;color:var(--ink3)">Pregunta ${i+1}</span></div>
+      <div class="result-q-text">${item.q}</div>
+      <div class="result-feedback">${item.feedback}</div>
+    </div>`).join('');
+}
+function retryCertamen(){document.getElementById('certamenResult').style.display='none';document.getElementById('certamenSetup').style.display='block';}
+
+// ─── INIT ────────────────────────────────────────────────
+buildSidebar();buildHeader();
+</script>
+</body>
+</html>
